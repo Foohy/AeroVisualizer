@@ -31,6 +31,8 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.numUpdateInterval = new System.Windows.Forms.NumericUpDown();
+            this.label6 = new System.Windows.Forms.Label();
             this.numMultiplier = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
             this.labelColor = new System.Windows.Forms.Label();
@@ -42,16 +44,14 @@
             this.labelHue = new System.Windows.Forms.Label();
             this.sliderHue = new System.Windows.Forms.TrackBar();
             this.label1 = new System.Windows.Forms.Label();
-            this.labelDevice = new System.Windows.Forms.Label();
             this.SlideTimer = new System.Windows.Forms.Timer(this.components);
-            this.label6 = new System.Windows.Forms.Label();
-            this.numUpdateInterval = new System.Windows.Forms.NumericUpDown();
+            this.comboDeviceSelect = new System.Windows.Forms.ComboBox();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numUpdateInterval)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMultiplier)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.slideScrollSpeed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numSampleCutoff)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.sliderHue)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numUpdateInterval)).BeginInit();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -77,6 +77,40 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Settings";
+            // 
+            // numUpdateInterval
+            // 
+            this.numUpdateInterval.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.numUpdateInterval.Location = new System.Drawing.Point(121, 71);
+            this.numUpdateInterval.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.numUpdateInterval.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numUpdateInterval.Name = "numUpdateInterval";
+            this.numUpdateInterval.Size = new System.Drawing.Size(149, 20);
+            this.numUpdateInterval.TabIndex = 11;
+            this.numUpdateInterval.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.numUpdateInterval.Value = new decimal(new int[] {
+            35,
+            0,
+            0,
+            0});
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(6, 73);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(104, 13);
+            this.label6.TabIndex = 10;
+            this.label6.Text = "Update interval (ms):";
             // 
             // numMultiplier
             // 
@@ -221,61 +255,29 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Device:";
             // 
-            // labelDevice
-            // 
-            this.labelDevice.AutoSize = true;
-            this.labelDevice.Location = new System.Drawing.Point(62, 9);
-            this.labelDevice.Name = "labelDevice";
-            this.labelDevice.Size = new System.Drawing.Size(33, 13);
-            this.labelDevice.TabIndex = 2;
-            this.labelDevice.Text = "None";
-            // 
             // SlideTimer
             // 
             this.SlideTimer.Enabled = true;
             this.SlideTimer.Interval = 10;
             this.SlideTimer.Tick += new System.EventHandler(this.SlideTimer_Tick);
             // 
-            // label6
+            // comboDeviceSelect
             // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(6, 73);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(104, 13);
-            this.label6.TabIndex = 10;
-            this.label6.Text = "Update interval (ms):";
-            // 
-            // numUpdateInterval
-            // 
-            this.numUpdateInterval.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.comboDeviceSelect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.numUpdateInterval.Location = new System.Drawing.Point(121, 71);
-            this.numUpdateInterval.Maximum = new decimal(new int[] {
-            1000,
-            0,
-            0,
-            0});
-            this.numUpdateInterval.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numUpdateInterval.Name = "numUpdateInterval";
-            this.numUpdateInterval.Size = new System.Drawing.Size(149, 20);
-            this.numUpdateInterval.TabIndex = 11;
-            this.numUpdateInterval.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.numUpdateInterval.Value = new decimal(new int[] {
-            35,
-            0,
-            0,
-            0});
+            this.comboDeviceSelect.FormattingEnabled = true;
+            this.comboDeviceSelect.Location = new System.Drawing.Point(62, 6);
+            this.comboDeviceSelect.Name = "comboDeviceSelect";
+            this.comboDeviceSelect.Size = new System.Drawing.Size(226, 21);
+            this.comboDeviceSelect.TabIndex = 2;
+            this.comboDeviceSelect.SelectedIndexChanged += new System.EventHandler(this.comboDeviceSelect_SelectedIndexChanged);
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(300, 288);
-            this.Controls.Add(this.labelDevice);
+            this.Controls.Add(this.comboDeviceSelect);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.groupBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -286,11 +288,11 @@
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numUpdateInterval)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMultiplier)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.slideScrollSpeed)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numSampleCutoff)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.sliderHue)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numUpdateInterval)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -300,7 +302,6 @@
 
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label labelDevice;
         private System.Windows.Forms.TrackBar sliderHue;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
@@ -314,6 +315,7 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.NumericUpDown numUpdateInterval;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.ComboBox comboDeviceSelect;
     }
 }
 

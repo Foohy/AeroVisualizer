@@ -51,7 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioManager.cs" />
+    <Compile Include="WasapiDevice.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>

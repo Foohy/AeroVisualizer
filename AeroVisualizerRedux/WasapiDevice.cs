@@ -14,9 +14,7 @@ namespace AeroVisualizerRedux
         public int CurrentDevice { get; private set; }
         public delegate int FFTThink(IntPtr buffer, int length, IntPtr user);
 
-        private DSPPROC dspProc;
         private WASAPIPROC wasProc;
-        private BassWasapiHandler _wasapi;
         private FFTThink wasapiThink;
 
         public WasapiDevice()
@@ -47,11 +45,13 @@ namespace AeroVisualizerRedux
 
         public void Start()
         {
+            BassWasapi.BASS_WASAPI_SetDevice(CurrentDevice);
             BassWasapi.BASS_WASAPI_Start();
         }
 
         public void Stop()
         {
+            BassWasapi.BASS_WASAPI_SetDevice(CurrentDevice);
             BassWasapi.BASS_WASAPI_Stop(false);
         }
 
@@ -94,7 +94,6 @@ namespace AeroVisualizerRedux
         {
             BASS_WASAPI_DEVICEINFO[] wasapiDevices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
             int devnum = 1;
-            BASS_WASAPI_DEVICEINFO deviceinfo = null;
             for (int i = 0; i < wasapiDevices.Length; i++)
             {
                 BASS_WASAPI_DEVICEINFO info = wasapiDevices[i];
@@ -102,10 +101,8 @@ namespace AeroVisualizerRedux
                 if (!info.IsInput && info.IsDefault)
                 {
                     devnum = i + 1;
-                    deviceinfo = wasapiDevices[devnum];
                     break;
                 }
-
             }
 
             return devnum;

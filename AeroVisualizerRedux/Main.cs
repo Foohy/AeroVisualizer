@@ -39,7 +39,25 @@ namespace AeroVisualizerRedux
             curDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
             curDevice.Start();
 
-            labelDevice.Text = curDevice.CurrentDeviceInfo.name;
+            //Enumerate through all available devices and list em as possibilities
+            BASS_WASAPI_DEVICEINFO[] wasapiDevices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
+            int devnum = 1;
+            for (int i = 0; i < wasapiDevices.Length; i++)
+            {
+                BASS_WASAPI_DEVICEINFO info = wasapiDevices[i];
+
+                if (!info.IsInput && info.IsEnabled )
+                {
+                    devnum = i + 1;
+                    int index = comboDeviceSelect.Items.Add(new DeviceInfo(info, devnum));
+
+                    if (devnum == curDevice.CurrentDevice)
+                    {
+                        comboDeviceSelect.SelectedIndex = index;
+                    }
+                }
+            }
+
             stopWatch.Start();
         }
 
@@ -130,6 +148,18 @@ namespace AeroVisualizerRedux
             labelColor.Text = slideScrollSpeed.Value.ToString();
         }
 
+        private void comboDeviceSelect_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Get the device index from the selected device
+            DeviceInfo info = (DeviceInfo)comboDeviceSelect.Items[comboDeviceSelect.SelectedIndex];
+            if (info == null) return;
+
+            curDevice.Stop();
+            curDevice = new WasapiDevice(info.WasapiDeviceNum);
+            curDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
+            curDevice.Start();
+        }
+
         private void Main_FormClosed(object sender, FormClosedEventArgs e)
         {
             curDevice.Stop();
@@ -139,6 +169,23 @@ namespace AeroVisualizerRedux
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.IsClosing = true;
+        }
+    }
+
+    class DeviceInfo
+    {
+        public BASS_WASAPI_DEVICEINFO WasapiDeviceInfo { get; private set; }
+        public int WasapiDeviceNum { get; private set; }
+
+        public DeviceInfo(BASS_WASAPI_DEVICEINFO info, int num )
+        {
+            WasapiDeviceInfo = info;
+            WasapiDeviceNum = num;
+        }
+
+        public override string ToString()
+        {
+            return WasapiDeviceInfo.name;
         }
     }
 }
