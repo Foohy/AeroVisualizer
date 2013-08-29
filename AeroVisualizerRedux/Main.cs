@@ -17,14 +17,14 @@ namespace AeroVisualizerRedux
         //Some global stuffs
         WinAPI.DWM_COLORIZATION_PARAMS Backup; //Var for storing their current color scheme
 
-        private DSPPROC dspProc;
-        private WASAPIPROC wasProc;
-        private BassWasapiHandler _wasapi;
-        private float[] fft = new float[2048];
+        //Store our wasabi stuff
+        WasapiDevice curDevice;
+
         private float BASS_CUTTOFF = 64; //When to stop sampling the bass
         private float HUE = 0;
         private bool IsClosing = false;
         private Stopwatch stopWatch = new Stopwatch();
+        private float[] fft = new float[2048];
 
         public Main()
         {
@@ -33,32 +33,13 @@ namespace AeroVisualizerRedux
 
             //This is so you don't see the dumb HERPADERP BASS IS STARTING spash screen
             BassNet.Registration("swkauker@yahoo.com", "2X2832371834322");
-            Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0);
 
-            //Initialize bass with a 'no sound' device
-            Bass.BASS_Init(0, 48000, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
+            //Create our initial wasapi device
+            curDevice = new WasapiDevice(); //Don't pass a device number so it'll auto select for us
+            curDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
+            curDevice.Start();
 
-            BASS_WASAPI_DEVICEINFO[] wasapiDevices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
-            int devnum = 1;
-            BASS_WASAPI_DEVICEINFO deviceinfo = null;
-            for (int i = 0; i < wasapiDevices.Length; i++)
-            {
-                BASS_WASAPI_DEVICEINFO info = wasapiDevices[i];
-
-                if (!info.IsInput && info.IsDefault)
-                {
-                    devnum = i + 1;
-                    deviceinfo = wasapiDevices[devnum];
-                    break;
-                }
-
-            }
-            labelDevice.Text = deviceinfo.name;
-            wasProc = new WASAPIPROC(WasapiCallback);
-            Console.WriteLine(BassWasapi.BASS_WASAPI_CheckFormat(devnum, deviceinfo.mixfreq, deviceinfo.mixchans, BASSWASAPIFormat.BASS_WASAPI_FORMAT_32BIT));
-            BassWasapi.BASS_WASAPI_Init(devnum, deviceinfo.mixfreq, deviceinfo.mixchans, BASSWASAPIInit.BASS_WASAPI_BUFFER | BASSWASAPIInit.BASS_WASAPI_SHARED, 1, 0, wasProc, IntPtr.Zero);
-            BassWasapi.BASS_WASAPI_Start();
-
+            labelDevice.Text = curDevice.CurrentDeviceInfo.name;
             stopWatch.Start();
         }
 
@@ -151,6 +132,7 @@ namespace AeroVisualizerRedux
 
         private void Main_FormClosed(object sender, FormClosedEventArgs e)
         {
+            curDevice.Stop();
             Bass.BASS_Free();
         }
 
