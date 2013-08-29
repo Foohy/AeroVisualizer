@@ -67,9 +67,8 @@ namespace AeroVisualizerRedux
             {
                 //Initialize bass with a 'no sound' device
                 Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0);
-                Bass.BASS_Init(0, 48000, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
+                BassInit = Bass.BASS_Init(0, 48000, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
             }
-
 
             //Get some info about their selected device
             var deviceinfo = BassWasapi.BASS_WASAPI_GetDeviceInfo(device);
