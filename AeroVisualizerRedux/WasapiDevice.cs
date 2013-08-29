@@ -10,57 +10,32 @@ namespace AeroVisualizerRedux
     class WasapiDevice
     {
         public static bool BassInit { get; private set; }
-        public BASS_WASAPI_DEVICEINFO CurrentDeviceInfo { get; private set; }
-        public int CurrentDevice { get; private set; }
+        public static BASS_WASAPI_DEVICEINFO CurrentDeviceInfo { get; private set; }
+        public static int CurrentDevice { get; private set; }
         public delegate int FFTThink(IntPtr buffer, int length, IntPtr user);
 
-        private WASAPIPROC wasProc;
-        private FFTThink wasapiThink;
+        private static WASAPIPROC wasProc;
+        private static FFTThink wasapiThink;
 
-        public WasapiDevice()
-        {
-            int device = RetrieveDefaultDevice();
-            this.init(device);
-        }
-
-        public WasapiDevice(FFTThink think)
-        {
-            this.SetDelegate(think);
-
-            int device = RetrieveDefaultDevice();
-            this.init(device);
-        }
-
-        public WasapiDevice(int device)
-        {
-            this.init(device);
-        }
-
-        public WasapiDevice(int device, FFTThink think)
-        {
-            this.SetDelegate(think);
-
-            this.init(device);
-        }
-
-        public void Start()
+        public static void Start()
         {
             BassWasapi.BASS_WASAPI_SetDevice(CurrentDevice);
             BassWasapi.BASS_WASAPI_Start();
         }
 
-        public void Stop()
+        public static void Stop()
         {
+
             BassWasapi.BASS_WASAPI_SetDevice(CurrentDevice);
             BassWasapi.BASS_WASAPI_Stop(false);
         }
 
-        public void SetDelegate(FFTThink think)
+        public static void SetDelegate(FFTThink think)
         {
-            this.wasapiThink = think;
+            wasapiThink = think;
         }
 
-        private void init(int device)
+        public static void SetDevice(int device)
         {
             //Initialize bass.net if we need to
             if (!BassInit)
@@ -77,12 +52,15 @@ namespace AeroVisualizerRedux
             CurrentDevice = device;
             CurrentDeviceInfo = deviceinfo;
 
+            //Set the device so subsequent calls are on it
+            BassWasapi.BASS_WASAPI_SetDevice(CurrentDevice);
+
             wasProc = new WASAPIPROC(WasapiCallback);
 
             BassWasapi.BASS_WASAPI_Init(device, deviceinfo.mixfreq, deviceinfo.mixchans, BASSWASAPIInit.BASS_WASAPI_BUFFER | BASSWASAPIInit.BASS_WASAPI_SHARED, 1, 0, wasProc, IntPtr.Zero);
         }
 
-        private int WasapiCallback(IntPtr buffer, int length, IntPtr user)
+        private static int WasapiCallback(IntPtr buffer, int length, IntPtr user)
         {
             if (wasapiThink != null)
                 return wasapiThink(buffer, length, user);
@@ -90,7 +68,7 @@ namespace AeroVisualizerRedux
             return length;
         }
 
-        private static int RetrieveDefaultDevice()
+        public static int RetrieveDefaultDevice()
         {
             BASS_WASAPI_DEVICEINFO[] wasapiDevices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
             int devnum = 1;

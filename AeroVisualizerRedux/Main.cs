@@ -17,9 +17,6 @@ namespace AeroVisualizerRedux
         //Some global stuffs
         WinAPI.DWM_COLORIZATION_PARAMS Backup; //Var for storing their current color scheme
 
-        //Store our wasabi stuff
-        WasapiDevice curDevice;
-
         private float BASS_CUTTOFF = 64; //When to stop sampling the bass
         private float HUE = 0;
         private bool IsClosing = false;
@@ -35,9 +32,9 @@ namespace AeroVisualizerRedux
             BassNet.Registration("swkauker@yahoo.com", "2X2832371834322");
 
             //Create our initial wasapi device
-            curDevice = new WasapiDevice(); //Don't pass a device number so it'll auto select for us
-            curDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
-            curDevice.Start();
+            WasapiDevice.SetDevice(WasapiDevice.RetrieveDefaultDevice());
+            WasapiDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
+            WasapiDevice.Start();
 
             //Enumerate through all available devices and list em as possibilities
             BASS_WASAPI_DEVICEINFO[] wasapiDevices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
@@ -51,7 +48,7 @@ namespace AeroVisualizerRedux
                     devnum = i + 1;
                     int index = comboDeviceSelect.Items.Add(new DeviceInfo(info, devnum));
 
-                    if (devnum == curDevice.CurrentDevice)
+                    if (devnum == WasapiDevice.CurrentDevice)
                     {
                         comboDeviceSelect.SelectedIndex = index;
                     }
@@ -154,15 +151,16 @@ namespace AeroVisualizerRedux
             DeviceInfo info = (DeviceInfo)comboDeviceSelect.Items[comboDeviceSelect.SelectedIndex];
             if (info == null) return;
 
-            curDevice.Stop();
-            curDevice = new WasapiDevice(info.WasapiDeviceNum);
-            curDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
-            curDevice.Start();
+            WasapiDevice.Stop();
+
+            WasapiDevice.SetDevice(info.WasapiDeviceNum);
+            WasapiDevice.SetDelegate(new WasapiDevice.FFTThink(WasapiCallback));
+            WasapiDevice.Start();
         }
 
         private void Main_FormClosed(object sender, FormClosedEventArgs e)
         {
-            curDevice.Stop();
+            WasapiDevice.Stop();
             Bass.BASS_Free();
         }
 
