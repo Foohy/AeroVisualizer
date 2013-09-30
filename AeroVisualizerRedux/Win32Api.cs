@@ -15,7 +15,7 @@ namespace AeroVisualizerRedux
         public static extern bool DwmIsCompositionEnabled();
 
         [DllImport("dwmapi.dll", EntryPoint = "#131", PreserveSig = false)]
-        public static extern void DwmSetColorizationParameters(ref DWM_COLORIZATION_PARAMS parameters, long uUnknown);
+        public static extern void DwmSetColorizationParameters(ref DWM_COLORIZATION_PARAMS parameters, bool uUnknown);
 
         public const int WM_GETICON = 0x7F;
 
@@ -31,15 +31,37 @@ namespace AeroVisualizerRedux
         [DllImport("kernel32.dll")]
         public static extern bool SetProcessWorkingSetSize(IntPtr handle, int minimumWorkingSetSize, int maximumWorkingSetSize);
 
+        [StructLayout( LayoutKind.Sequential )]
         public struct DWM_COLORIZATION_PARAMS
         {
-            public long Color1;
-            public long Color2;
+            /// <summary>
+            /// Colorization color
+            /// </summary>
+            public long Color;
+            /// <summary>
+            /// Colorization afterglow
+            /// </summary>
+            public long AfterglowColor;
+            /// <summary>
+            /// Color intensity (0-100)
+            /// </summary>
             public long Intensity;
-            public long Unknown1;
-            public long Unknown2;
-            public long Unknown3;
-            public long Opaque;
+            /// <summary>
+            /// After glow balance
+            /// </summary>
+            public long AfterGlowBalance;
+            /// <summary>
+            /// Blur balance
+            /// </summary>
+            public long BlurBalance;
+            /// <summary>
+            /// Glass reflection intensity
+            /// </summary>
+            public long GlassReflInt;
+            /// <summary>
+            /// Color is completely opaque
+            /// </summary>
+            public bool Opaque;
         }
 
         [StructLayout(LayoutKind.Sequential)]

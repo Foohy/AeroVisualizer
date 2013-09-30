@@ -196,9 +196,9 @@ namespace AeroVisualizerRedux
             WinAPI.DWM_COLORIZATION_PARAMS color;
             WinAPI.DwmGetColorizationParameters(out color);
 
-            color.Color2 = alpha;
+            color.AfterglowColor = alpha;
 
-            WinAPI.DwmSetColorizationParameters(ref color, 0);
+            WinAPI.DwmSetColorizationParameters(ref color, false);
         }
 
         public static void SetDwmColor(System.Drawing.Color newColor)
@@ -208,9 +208,9 @@ namespace AeroVisualizerRedux
                 WinAPI.DWM_COLORIZATION_PARAMS color;
                 WinAPI.DwmGetColorizationParameters(out color);
 
-                color.Color1 = System.Drawing.Color.FromArgb(255, newColor.R, newColor.G, newColor.B).ToArgb();
+                color.Color = System.Drawing.Color.FromArgb(255, newColor.R, newColor.G, newColor.B).ToArgb();
 
-                WinAPI.DwmSetColorizationParameters(ref color, 0);
+                WinAPI.DwmSetColorizationParameters(ref color, false);
             }
         }
     }
