@@ -14,6 +14,7 @@ namespace AeroVisualizerRedux
         public static int CurrentDevice { get; private set; }
         public delegate int FFTThink(IntPtr buffer, int length, IntPtr user);
 
+        
         private static WASAPIPROC wasProc;
         private static FFTThink wasapiThink;
 
@@ -43,6 +44,9 @@ namespace AeroVisualizerRedux
                 //Initialize bass with a 'no sound' device
                 Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0);
                 BassInit = Bass.BASS_Init(0, 48000, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
+
+                wasProc = new WASAPIPROC(WasapiCallback);
+                GC.KeepAlive(wasProc);
             }
 
             //Get some info about their selected device
@@ -54,8 +58,6 @@ namespace AeroVisualizerRedux
 
             //Set the device so subsequent calls are on it
             BassWasapi.BASS_WASAPI_SetDevice(CurrentDevice);
-
-            wasProc = new WASAPIPROC(WasapiCallback);
 
             BassWasapi.BASS_WASAPI_Init(device, deviceinfo.mixfreq, deviceinfo.mixchans, BASSWASAPIInit.BASS_WASAPI_BUFFER | BASSWASAPIInit.BASS_WASAPI_SHARED, 1, 0, wasProc, IntPtr.Zero);
         }
