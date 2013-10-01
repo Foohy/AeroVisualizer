@@ -61,7 +61,25 @@ namespace AeroVisualizerRedux
             if (editor.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 var rule = editor.RuleInfo;
-                AddRule(rule.Name, rule.ModifierString, rule.OutputVal, rule.AppendMode);
+                AddRule(rule.Name, rule.ModifierString, rule.OutputVal, rule.AppendMode).Tag = rule;
+            }
+        }
+
+        private void btnEdit_Click(object sender, EventArgs e)
+        {
+            if (listRules.SelectedItems.Count < 1) return;
+
+            var selected = listRules.SelectedItems[0];
+            if (selected == null || selected.Tag == null || !(selected.Tag is RuleManager.Rule)) return;
+
+            RuleEdit editor = new RuleEdit(this.MainForm.AudioRules, (RuleManager.Rule)selected.Tag);
+            if (editor.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                //Remove the rule we're replacing
+                listRules.Items.Remove(selected);
+
+                var rule = editor.RuleInfo;
+                AddRule(rule.Name, rule.ModifierString, rule.OutputVal, rule.AppendMode).Tag = rule;
             }
         }
 
