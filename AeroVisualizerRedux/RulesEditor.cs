@@ -24,9 +24,10 @@ namespace AeroVisualizerRedux
             LoadRules(this.MainForm.AudioRules);
         }
 
-        public ListViewItem AddRule( string name, string modifier, Output output, AppendMethod appendmode )
+        public ListViewItem AddRule( string name, string modifier, Output output, AppendMethod appendmode, int index=-1 )
         {
-            var item = listRules.Items.Add( name );
+            ListViewItem item = new ListViewItem( name );
+            listRules.Items.Insert( ((index < 0) ? listRules.Items.Count: index), item );
             item.SubItems.Add(modifier).Tag = modifier;
             item.SubItems.Add(output.Name).Tag = output;
             item.SubItems.Add( appendmode.ToString() ).Tag = appendmode;
@@ -75,6 +76,9 @@ namespace AeroVisualizerRedux
             RuleEdit editor = new RuleEdit(this.MainForm.AudioRules, (RuleManager.Rule)selected.Tag);
             if (editor.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+                //Get the index so we can insert the new rule there
+                var index = listRules.Items.IndexOf(selected);
+
                 //Remove the rule we're replacing
                 listRules.Items.Remove(selected);
 
