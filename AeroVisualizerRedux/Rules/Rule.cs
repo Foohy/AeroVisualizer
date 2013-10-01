@@ -131,9 +131,20 @@ namespace RuleManager
         /// </summary>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// The default value for this output (if no rule sets it)
+        /// </summary>
+        public float DefaultValue { get; private set; }
+
         public Output(string name)
         {
             Name = name;
+        }
+
+        public Output(string name, float def)
+        {
+            Name = name;
+            DefaultValue = def;
         }
 
         public override string ToString()

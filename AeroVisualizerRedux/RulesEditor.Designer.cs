@@ -28,12 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "Average",
             "Average()*10 + 20 - Math.Sin( CurTime() )",
             "Color hue",
             "Set"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
             "Average (85-180)",
             "Average(85, 180)/100",
             "Color intensity",
@@ -63,9 +63,10 @@
             this.columnHeader2,
             this.columnHeader3,
             this.columnHeader4});
+            this.listRules.FullRowSelect = true;
             this.listRules.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem3,
-            listViewItem4});
+            listViewItem1,
+            listViewItem2});
             this.listRules.Location = new System.Drawing.Point(12, 6);
             this.listRules.Name = "listRules";
             this.listRules.Size = new System.Drawing.Size(589, 233);

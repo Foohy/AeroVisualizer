@@ -60,11 +60,14 @@ namespace RuleManager
         /// </summary>
         /// <param name="output">The specific output instance that'll be solved</param>
         /// <returns>The output value returned by the rule collection</returns>
-        public float GetRulesOutput(string output)
+        public float GetRulesOutput(string output, float defaultValue=0)
         {
-            float val=0;
-            foreach (var rule in this.rules )
+            //Default value in case there are no rules
+            float val = defaultValue;
+
+            for (int i = 0; i < this.rules.Count; i++)
             {
+                var rule = this.rules[i];
                 if (rule.OutputVal.Name != output) continue;
 
                 float ruleOut = rule.ExecuteModifiers();
@@ -81,13 +84,13 @@ namespace RuleManager
         /// <returns>The output value returned by the rule collection</returns>
         public float GetRulesOutput(Output output)
         {
-            float val = 0;
-            foreach (var rule in this.rules)
+            float val = output.DefaultValue;
+            for (int i = 0; i < this.rules.Count; i++)
             {
-                if (rule.OutputVal != output) continue;
+                if (this.rules[i].OutputVal != output) continue;
 
-                float ruleOut = rule.ExecuteModifiers();
-                val = CalculateAppendResult(rule.AppendMode, val, ruleOut);
+                float ruleOut = this.rules[i].ExecuteModifiers();
+                val = CalculateAppendResult(this.rules[i].AppendMode, val, ruleOut);
             }
 
             return val;
