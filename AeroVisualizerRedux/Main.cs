@@ -25,15 +25,10 @@ namespace AeroVisualizerRedux
 
         private long ElapsedTime;
 
-        private float BASS_CUTTOFF = 64; //When to stop sampling the bass
-        private float HUE = 0;
         private bool IsClosing = false;
         private Stopwatch stopWatch = new Stopwatch();
         private float[] fft = new float[FFT_PRECISION];
         public RuleCollection AudioRules = new RuleCollection();
-
-        private Output outIntensity;
-        private Output outHue;
 
         public Main()
         {
@@ -43,8 +38,11 @@ namespace AeroVisualizerRedux
             BackupColorScheme();
 
             //Set some inputs/outputs for our rule collection
-            outIntensity = AudioRules.AddOutput(new Output("Intensity"));
-            outHue = AudioRules.AddOutput(new Output("Hue"));
+            AudioRules.AddOutput(new Output("Saturation"));
+            AudioRules.AddOutput(new Output("Hue"));
+            AudioRules.AddOutput(new Output("Value"));
+
+            AudioRules.AddOutput(new Output("Intensity"));
 
             //Create the built-in helper methods for the rules
             CreateHelperFunctions();
@@ -84,9 +82,9 @@ namespace AeroVisualizerRedux
         /// </summary>
         private void CreateHelperFunctions()
         {
-            Func<long> CurTime = () =>
+            Func<float> CurTime = () =>
             {
-                return ElapsedTime;
+                return (float)ElapsedTime;
             };
             AudioRules.Util.CurTime = CurTime;
 
@@ -159,56 +157,26 @@ namespace AeroVisualizerRedux
                 BassWasapi.BASS_WASAPI_GetData(fft, (int)BASS_FFT_PRECISION);
 
                 //IT'S TIME TO LAY DOWN SOME GROUND RULES
-                float average = AudioRules.GetRulesOutput(outIntensity);
-
+                float saturation = AudioRules.GetRulesOutput("Saturation", 1);
+                float hue = AudioRules.GetRulesOutput("Hue");
+                float value = AudioRules.GetRulesOutput("Value", 1);
 
                 int r, g, b = 0;
-                average *= (float)numMultiplier.Value;
 
-                Utils.HsvToRgb(HUE, average, 1, out r, out g, out b);
+                Utils.HsvToRgb(hue, saturation, value, out r, out g, out b);
 
-                Utils.SetDwmColor(Color.FromArgb((int)Utils.Clamp(0, 255, (average * 255)), r, g, b));
-                Utils.SetDwmAlpha((int)Utils.Clamp(0, 100, (average * 100)));
+                Utils.SetDwmColor(Color.FromArgb((int)Utils.Clamp(0, 255, (saturation * 255)), r, g, b));
+                Utils.SetDwmAlpha((long)AudioRules.GetRulesOutput("Intensity", 1)*100);
             }
 
             //always always return length, we don't want to halt anything
             return length;
         }
 
-        private void numSampleCutoff_ValueChanged(object sender, EventArgs e)
-        {
-            BASS_CUTTOFF = (float)numSampleCutoff.Value;
-        }
-
-        private void sliderHue_Scroll(object sender, EventArgs e)
-        {
-            HUE = sliderHue.Value;
-            labelHue.Text = HUE.ToString();
-        }
-
         private void OnApplicationExit(object sender, EventArgs e)
         {
             Utils.SetDwmColor(System.Drawing.Color.FromArgb((int)Backup.Color));
             WinAPI.DwmSetColorizationParameters(ref Backup, false);
-        }
-
-        private void SlideTimer_Tick(object sender, EventArgs e)
-        {
-            HUE += (float)slideScrollSpeed.Value / (float)100;
-
-            labelHue.Text = HUE.ToString();
-
-            if ( HUE > 358)
-            {
-                HUE = 0;
-            }
-
-            sliderHue.Value = (int)HUE;
-        }
-
-        private void slideScrollSpeed_Scroll(object sender, EventArgs e)
-        {
-            labelColor.Text = slideScrollSpeed.Value.ToString();
         }
 
         private void comboDeviceSelect_SelectedIndexChanged(object sender, EventArgs e)
