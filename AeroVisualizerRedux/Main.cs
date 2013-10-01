@@ -9,6 +9,9 @@ using System.Windows.Forms;
 using Un4seen.Bass;
 using Un4seen.BassWasapi;
 using System.Diagnostics;
+using System.Dynamic;
+using Microsoft.CSharp;
+using RuleManager;
 
 namespace AeroVisualizerRedux
 {
@@ -17,16 +20,34 @@ namespace AeroVisualizerRedux
         //Some global stuffs
         WinAPI.DWM_COLORIZATION_PARAMS Backup; //Var for storing their current color scheme
 
+        private const int FFT_PRECISION = 2048;
+        private const BASSData BASS_FFT_PRECISION = BASSData.BASS_DATA_FFT2048;
+
+        private long ElapsedTime;
+
         private float BASS_CUTTOFF = 64; //When to stop sampling the bass
         private float HUE = 0;
         private bool IsClosing = false;
         private Stopwatch stopWatch = new Stopwatch();
-        private float[] fft = new float[2048];
+        private float[] fft = new float[FFT_PRECISION];
+        public RuleCollection AudioRules = new RuleCollection();
+
+        private Output outIntensity;
+        private Output outHue;
 
         public Main()
         {
             InitializeComponent();
+
+            //Store their colors so we can restore them when we close
             BackupColorScheme();
+
+            //Set some inputs/outputs for our rule collection
+            outIntensity = AudioRules.AddOutput(new Output("Intensity"));
+            outHue = AudioRules.AddOutput(new Output("Hue"));
+
+            //Create the built-in helper methods for the rules
+            CreateHelperFunctions();
 
             //This is so you don't see the dumb HERPADERP BASS IS STARTING spash screen
             BassNet.Registration("swkauker@yahoo.com", "2X2832371834322");
@@ -58,44 +79,90 @@ namespace AeroVisualizerRedux
             stopWatch.Start();
         }
 
+        /// <summary>
+        /// Create the helper functions for the customizable rules
+        /// </summary>
+        private void CreateHelperFunctions()
+        {
+            Func<long> CurTime = () =>
+            {
+                return ElapsedTime;
+            };
+            AudioRules.Util.CurTime = CurTime;
+
+            Func<int, int, float> RangedAverage = (min, max) =>
+            {
+                return GetRangedAverage(min, max);
+            };
+            AudioRules.Util.GetRangedAverage = RangedAverage;
+
+            Func<float> GetAverage = () =>
+            {
+                return GetRangedAverage(0, WasapiDevice.CurrentDeviceInfo.mixfreq);
+            };
+            AudioRules.Util.GetAverage = GetAverage;
+        }
+
         private void BackupColorScheme()
         {
             WinAPI.DWM_COLORIZATION_PARAMS Temp;
             //Store their Original color settings, so they don't get angry!
             WinAPI.DwmGetColorizationParameters(out Backup);
 
-            Temp.Color1 = Backup.Color1;
-            Temp.Color2 = 0; //seems to be 0 to 100 2147483647
+            Temp.Color = Backup.Color;
+            Temp.AfterglowColor = Backup.AfterglowColor;
             Temp.Intensity = Backup.Intensity;
-            Temp.Unknown1 = Backup.Unknown1;
-            Temp.Unknown2 = Backup.Unknown2;
-            Temp.Unknown3 = Backup.Unknown3;
+            Temp.AfterGlowBalance = Backup.AfterGlowBalance;
+            Temp.BlurBalance = Backup.BlurBalance;
+            Temp.GlassReflInt = Backup.GlassReflInt;
             Temp.Opaque = Backup.Opaque;
 
-            WinAPI.DwmSetColorizationParameters(ref Temp, 4);
+            WinAPI.DwmSetColorizationParameters(ref Temp, false);
 
             // Handle the ApplicationExit event to know when the application is exiting.
             Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
         }
 
+        /// <summary>
+        /// Get the ranged average of the FFT between the minimum and maximum frequencies
+        /// </summary>
+        /// <param name="min">The lowest frequency to include in averaging</param>
+        /// <param name="max">The highest frequency to include in averaging</param>
+        /// <returns>The average magnitude of the frequencies between min and max</returns>
+        private float GetRangedAverage(int min, int max)
+        {
+            //Convert min and max to be from frequncies down to numbers within the fft array
+            min = (int)((min / (float)WasapiDevice.CurrentDeviceInfo.mixfreq) * (float)FFT_PRECISION);
+            max = (int)((max / (float)WasapiDevice.CurrentDeviceInfo.mixfreq) * (float)FFT_PRECISION);
+            float average = 0;
+            for (int i = min; i < max; i++)
+            {
+                average += fft[i];
+            }
+            average = average / (max-min);
+            return average;
+        }
+
         //perform FFT math
         private int WasapiCallback(IntPtr buffer, int length, IntPtr user)
         {
+            //Limit how often we set the color, this function is run A LOT
             if (stopWatch.ElapsedMilliseconds > numUpdateInterval.Value)
             {
+                //Keep tabs on the current time
+                ElapsedTime += stopWatch.ElapsedMilliseconds;
+
                 stopWatch.Reset();
                 stopWatch.Start();
 
-                BassWasapi.BASS_WASAPI_GetData(fft, (int)BASSData.BASS_DATA_FFT2048);
+                //Retrieve fft data from the wasapi device
+                BassWasapi.BASS_WASAPI_GetData(fft, (int)BASS_FFT_PRECISION);
+
+                //IT'S TIME TO LAY DOWN SOME GROUND RULES
+                float average = AudioRules.GetRulesOutput(outIntensity);
+
 
                 int r, g, b = 0;
-                float average = 0;
-
-                for (int i = 0; i < BASS_CUTTOFF; i++)
-                {
-                    average += fft[i];
-                }
-                average = average / BASS_CUTTOFF;
                 average *= (float)numMultiplier.Value;
 
                 Utils.HsvToRgb(HUE, average, 1, out r, out g, out b);
@@ -103,6 +170,8 @@ namespace AeroVisualizerRedux
                 Utils.SetDwmColor(Color.FromArgb((int)Utils.Clamp(0, 255, (average * 255)), r, g, b));
                 Utils.SetDwmAlpha((int)Utils.Clamp(0, 100, (average * 100)));
             }
+
+            //always always return length, we don't want to halt anything
             return length;
         }
 
@@ -119,11 +188,8 @@ namespace AeroVisualizerRedux
 
         private void OnApplicationExit(object sender, EventArgs e)
         {
-            //WinAPI.DwmSetColorizationParameters(ref Backup, 3);
-            Utils.SetDwmColor(System.Drawing.Color.FromArgb((int)Backup.Color1));
-
-            Backup.Color2 = 0;
-            WinAPI.DwmSetColorizationParameters(ref Backup, 4);
+            Utils.SetDwmColor(System.Drawing.Color.FromArgb((int)Backup.Color));
+            WinAPI.DwmSetColorizationParameters(ref Backup, false);
         }
 
         private void SlideTimer_Tick(object sender, EventArgs e)
@@ -167,6 +233,12 @@ namespace AeroVisualizerRedux
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.IsClosing = true;
+        }
+
+        private void btnAdvanced_Click(object sender, EventArgs e)
+        {
+            RulesEditor edit = new RulesEditor(this);
+            edit.ShowDialog();
         }
     }
 
