@@ -83,7 +83,7 @@ namespace AeroVisualizerRedux
                 listRules.Items.Remove(selected);
 
                 var rule = editor.RuleInfo;
-                AddRule(rule.Name, rule.ModifierString, rule.OutputVal, rule.AppendMode).Tag = rule;
+                AddRule(rule.Name, rule.ModifierString, rule.OutputVal, rule.AppendMode, index).Tag = rule;
             }
         }
 
