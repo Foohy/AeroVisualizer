@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using Microsoft.CSharp;
 using RuleManager;
+using System.Threading.Tasks;
 
 namespace AeroVisualizerRedux
 {
@@ -22,12 +23,19 @@ namespace AeroVisualizerRedux
 
         private const int FFT_PRECISION = 2048;
         private const BASSData BASS_FFT_PRECISION = BASSData.BASS_DATA_FFT2048;
+        private int AverageSampleAmount = 1;
+        private int SampleInterval = 1;
+        private bool ShouldSmoothSample = true;
 
+        private long nextSampleTime = 0;
+        
         private long ElapsedTime;
 
         private bool IsClosing = false;
         private Stopwatch stopWatch = new Stopwatch();
         private float[] fft = new float[FFT_PRECISION];
+        private float[] newfft = new float[FFT_PRECISION];
+        List<float[]> averagedFFT = new List<float[]>(5);      
         public RuleCollection AudioRules = new RuleCollection();
 
         public Main()
@@ -46,6 +54,10 @@ namespace AeroVisualizerRedux
 
             //Create the built-in helper methods for the rules
             CreateHelperFunctions();
+
+            //Set some initial values
+            AverageSampleAmount = trackSampleNum.Value;
+            SampleInterval = (int)numSampleInterval.Value;
 
             //This is so you don't see the dumb HERPADERP BASS IS STARTING spash screen
             BassNet.Registration("swkauker@yahoo.com", "2X2832371834322");
@@ -132,19 +144,49 @@ namespace AeroVisualizerRedux
             //Convert min and max to be from frequncies down to numbers within the fft array
             min = (int)((min / (float)WasapiDevice.CurrentDeviceInfo.mixfreq) * (float)FFT_PRECISION);
             max = (int)((max / (float)WasapiDevice.CurrentDeviceInfo.mixfreq) * (float)FFT_PRECISION);
+
             float average = 0;
-            for (int i = min; i < max; i++)
-            {
-                average += fft[i];
-            }
+            Parallel.For(min, max, i => average += fft[i]);
+            
             average = average / (max-min);
             return average;
+             
         }
 
         //perform FFT math
         private int WasapiCallback(IntPtr buffer, int length, IntPtr user)
         {
-            //Limit how often we set the color, this function is run A LOT
+            //Do these calculations as fast as possible
+
+            if (ShouldSmoothSample && ElapsedTime > nextSampleTime)
+            {
+                //Retrieve fft data from the wasapi device
+                BassWasapi.BASS_WASAPI_GetData(newfft, (int)BASS_FFT_PRECISION);
+
+                //Push it into a list of the last N samples
+                if (averagedFFT.Count < AverageSampleAmount)
+                    averagedFFT.Add(newfft);
+
+                if (averagedFFT.Count > AverageSampleAmount)
+                    averagedFFT.RemoveAt(AverageSampleAmount - 1);
+
+                //Reset our 'average' array
+                Array.Clear(fft, 0, fft.Length);
+
+                //Add up all the values
+                for (int i = 0; i < averagedFFT.Count; i++)
+                {
+                    Parallel.For(0, FFT_PRECISION, n => fft[n] = fft[n] + averagedFFT[i][n]);
+                }
+
+                //Average all the samples together
+                Parallel.For(0, FFT_PRECISION, i => fft[i] = fft[i] / averagedFFT.Count);
+
+                nextSampleTime = ElapsedTime + SampleInterval;
+            }
+
+
+            //Limit how often we actually set the color, this function is run A LOT
             if (stopWatch.ElapsedMilliseconds > numUpdateInterval.Value)
             {
                 //Keep tabs on the current time
@@ -153,8 +195,12 @@ namespace AeroVisualizerRedux
                 stopWatch.Reset();
                 stopWatch.Start();
 
-                //Retrieve fft data from the wasapi device
-                BassWasapi.BASS_WASAPI_GetData(fft, (int)BASS_FFT_PRECISION);
+                //Use the old method if smoothing is disabled
+                if (!ShouldSmoothSample)
+                {
+                    //Retrieve fft data from the wasapi device
+                    BassWasapi.BASS_WASAPI_GetData(fft, (int)BASS_FFT_PRECISION);
+                }
 
                 //IT'S TIME TO LAY DOWN SOME GROUND RULES
                 float saturation = AudioRules.GetRulesOutput("Saturation", 1);
@@ -207,6 +253,25 @@ namespace AeroVisualizerRedux
         {
             RulesEditor edit = new RulesEditor(this);
             edit.ShowDialog();
+        }
+
+        private void checkSmooth_CheckedChanged(object sender, EventArgs e)
+        {
+            trackSampleNum.Enabled      = checkSmooth.Checked;
+            labelSampleAmount.Enabled   = checkSmooth.Checked;
+            labelSampleInterval.Enabled = checkSmooth.Checked;
+            numSampleInterval.Enabled   = checkSmooth.Checked;
+        }
+
+        private void trackSampleNum_Scroll(object sender, EventArgs e)
+        {
+            labelSampleAmount.Text = string.Format("Sample Amount ({0})", trackSampleNum.Value);
+            AverageSampleAmount = trackSampleNum.Value;
+        }
+
+        private void numSampleInterval_ValueChanged(object sender, EventArgs e)
+        {
+            SampleInterval = (int)numSampleInterval.Value;
         }
     }
 
