@@ -111,6 +111,13 @@ namespace AeroVisualizerRedux
                 return GetRangedAverage(0, WasapiDevice.CurrentDeviceInfo.mixfreq);
             };
             AudioRules.Util.GetAverage = GetAverage;
+
+            //Let's make some preset properties for commonly used frequencies
+            AudioRules.Util.AVERAGE_BASS        = 0; //20-200Hz
+            AudioRules.Util.AVERAGE_MID         = 0; //630 - 2500Hz
+            AudioRules.Util.AVERAGE_HIGH        = 0; //2,000 - 20,000Hz
+            AudioRules.Util.AVERAGE_HARMONIC    = 0; //630 - 800Hz
+            AudioRules.Util.AVERAGE_VOLUME      = 0; //20 - 20,000Hz
         }
 
         private void BackupColorScheme()
@@ -201,6 +208,13 @@ namespace AeroVisualizerRedux
                     //Retrieve fft data from the wasapi device
                     BassWasapi.BASS_WASAPI_GetData(fft, (int)BASS_FFT_PRECISION);
                 }
+
+                //Before we run some rules, update some properties
+                AudioRules.Util.AVERAGE_BASS = GetRangedAverage(20, 200); //20-200Hz
+                AudioRules.Util.AVERAGE_MID = GetRangedAverage(630, 2500); //630 - 2500Hz
+                AudioRules.Util.AVERAGE_HIGH = GetRangedAverage(2000, 20000); //2,000 - 20,000Hz
+                AudioRules.Util.AVERAGE_HARMONIC = GetRangedAverage(630, 800); //630 - 800Hz
+                AudioRules.Util.AVERAGE_VOLUME = GetRangedAverage(20, 20000); //20 - 20,000Hz
 
                 //IT'S TIME TO LAY DOWN SOME GROUND RULES
                 float saturation = AudioRules.GetRulesOutput("Saturation", 1);
