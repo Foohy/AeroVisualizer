@@ -15,7 +15,7 @@ namespace AeroVisualizerRedux
         public static extern bool DwmIsCompositionEnabled();
 
         [DllImport("dwmapi.dll", EntryPoint = "#131", PreserveSig = false)]
-        public static extern void DwmSetColorizationParameters(ref DWM_COLORIZATION_PARAMS parameters, bool uUnknown);
+        public static extern void DwmSetColorizationParameters(ref DWM_COLORIZATION_PARAMS parameters, bool bIsTemporary);
 
         public const int WM_GETICON = 0x7F;
 
